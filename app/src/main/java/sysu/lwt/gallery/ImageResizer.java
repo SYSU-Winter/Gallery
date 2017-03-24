@@ -4,11 +4,14 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import java.io.FileDescriptor;
+
 /**
  * Created by 12136 on 2017/3/23.
  */
 
 public class ImageResizer {
+    public ImageResizer() {}
     public Bitmap decodeBitmapFromResource(Resources res, int resId, int requestedWidth, int requestedHeight) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         // 设置inJustDecodeBounds=true，这样BitmapFactory只会解析图片的原始宽和高信息
@@ -24,7 +27,23 @@ public class ImageResizer {
         return BitmapFactory.decodeResource(res, resId, options);
     }
 
-    public int calculateInSampleSize(BitmapFactory.Options options,
+    public Bitmap decodeBitmapFromFileDescriptor (FileDescriptor fileDescriptor,
+                                                  int requestedWidth, int requestedHeight) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        // 设置inJustDecodeBounds=true，这样BitmapFactory只会解析图片的原始宽和高信息
+        // 并不会真正加载图片，这是一个轻量级的操作
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+
+        // 计算采样率inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, requestedWidth, requestedHeight);
+
+        // 将inJustDecodeBounds设置为false，根据计算出来的inSampleSize重新加载图片
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+    }
+
+    private int calculateInSampleSize(BitmapFactory.Options options,
                                      int requestedWidth,
                                      int requestedHeight) {
         // 原始图片的宽高大小
